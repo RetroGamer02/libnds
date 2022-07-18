@@ -63,10 +63,9 @@ void decompress(const void* data, void* dst, DecompressType type);
 	\param dst the destination to decompress to.
 	\param data the data to decompress.
 	\param type the type of data to decompress.
-	\param readCB a callback to read the next byte of data.
-	\param getHeaderCB a callback to read the 32 byte header.
+	\param stream decompression callback stream
 */
-void decompressStream(const void* data, void* dst, DecompressType type, getByteCallback readCB, getHeaderCallback getHeaderCB);
+void decompressStream(const void* data, void* dst, DecompressType type, const TDecompressionStream *stream);
 
 #ifdef __cplusplus
 }

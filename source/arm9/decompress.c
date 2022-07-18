@@ -29,18 +29,29 @@ distribution.
 #include <nds/bios.h>
 #include <nds/arm9/sassert.h>
 
+#include <stdlib.h>
+
 static int getHeader(uint8 *source, uint16 *dest, uint32 arg) {
-	return *(uint32*)source;
+	return source[0] | (source[1] << 8) | (source[2] << 16) | (source[3] << 24);
 }
 
 static uint8 readByte(uint8 *source) {
-	return *source;
+	return source[0];
 }
+
+static uint32 readWord(uint8 *source) {
+	return source[0] | (source[1] << 8) | (source[2] << 16) | (source[3] << 24);
+}
+
+static uint8 huffmanBuffer[0x200];
+
 
 TDecompressionStream decomStream = {
 	getHeader,
-	0,
-	readByte
+	NULL,
+	readByte,
+	NULL,
+	readWord,
 };
 
 void decompress(const void* data, void* dst, DecompressType type)
@@ -48,49 +59,41 @@ void decompress(const void* data, void* dst, DecompressType type)
 	switch(type)
 	{
 		case LZ77Vram:
-			swiDecompressLZSSVram((void*)data, (void*)dst, 0, &decomStream);
+			swiDecompressLZSSVram(data, dst, 0, &decomStream);
 			break;
 		case LZ77:
-			swiDecompressLZSSWram((void*)data, (void*)dst);
+			swiDecompressLZSSWram(data, dst);
 			break;
 		case HUFF:
-			swiDecompressHuffman((void*)data, (void*)dst, 0, &decomStream);
+			swiDecompressHuffman(data, dst, huffmanBuffer, &decomStream);
 			break;
 		case RLE:
-			swiDecompressRLEWram((void*)data, (void*)dst);
+			swiDecompressRLEWram(data, dst);
 			break;
 		case RLEVram:
-			swiDecompressRLEVram((void*)data, (void*)dst, 0, &decomStream);
+			swiDecompressRLEVram(data, dst, 0, &decomStream);
 			break;
 		default:
 			break;
 	}
 }
 
-void decompressStream(const void* data, void* dst, DecompressType type, getByteCallback readCB, getHeaderCallback getHeaderCB)
+void decompressStream(const void* data, void* dst, DecompressType type, const TDecompressionStream *stream)
 {
 #ifdef ARM9
 	sassert(type != LZ77 && type != RLE, "LZ77 and RLE do not support streaming, use Vram versions");
 #endif
 
-
-	TDecompressionStream decompresStream =
-	{
-		getHeaderCB,
-		0,
-		readCB
-	};
-
 	switch(type)
 	{
 		case LZ77Vram:
-			swiDecompressLZSSVram((void*)data, (void*)dst, 0, &decompresStream);
+			swiDecompressLZSSVram(data, dst, 0, stream);
 			break;
 		case HUFF:
-			swiDecompressHuffman((void*)data, (void*)dst, 0, &decompresStream);
+			swiDecompressHuffman(data, dst, huffmanBuffer, stream);
 			break;
 		case RLEVram:
-			swiDecompressRLEVram((void*)data, (void*)dst, 0, &decompresStream);
+			swiDecompressRLEVram(data, dst, 0, stream);
 			break;
 		default:
 			break;

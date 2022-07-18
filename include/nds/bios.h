@@ -76,17 +76,30 @@ typedef int (*getResultCallback)(u8 * source);
 */
 typedef u8 (*getByteCallback)(u8 *source);
 
+/*!	\brief Should returns a raw byte of the stream.
+	\param source A pointer to the byte.
+	\return A byte.
+*/
+typedef u16 (*getHalfWordCallback)(u8 *source);
+
+/*!	\brief Should returns a raw byte of the stream.
+	\param source A pointer to the byte.
+	\return A byte.
+*/
+typedef u32 (*getWordCallback)(u8 *source);
+
 
 
 
 //! A struct that contains callback function pointers used by the decompression functions.
 typedef struct DecompressionStream
 {
-	getHeaderCallback getSize;		//!< gets called to get the header of the stream.
-	getResultCallback getResult;	//!< gets called to verify the result afterwards, can be NULL (no callback).
-	getByteCallback readByte;		//!< gets called to get a byte of the compressed data.
-	//according to gbatek, there are 2 more callback pointers here.
-} PACKED TDecompressionStream;
+	getHeaderCallback getSize;			//!< gets called to get the header of the stream.
+	getResultCallback getResult;		//!< gets called to verify the result afterwards, can be NULL (no callback).
+	getByteCallback readByte;			//!< gets called to get a byte of the compressed data.
+	getHalfWordCallback readHalfWord;	//!< gets called to get a halfword of the compressed data (unused).
+	getWordCallback readWord;			//!< gets called to get a word of the compressed data (required for Huffman).
+} TDecompressionStream;
 
 
 //! A struct and struct pointer with information about unpacking data.
@@ -222,7 +235,7 @@ void swiUnpackBits(uint8 * source, uint32 * destination, PUnpackStruct params);
 	\note Writes data a byte at a time.
 	\see decompress.h
 */
-void swiDecompressLZSSWram(void * source, void * destination);
+void swiDecompressLZSSWram(const void * source, void * destination);
 
 
 /*!	\brief Decompresses LZSS compressed data vram safe.
@@ -236,23 +249,23 @@ void swiDecompressLZSSWram(void * source, void * destination);
 	\note Writes data a halfword at a time.
 	\see decompress.h
 */
-int swiDecompressLZSSVram(void * source, void * destination, uint32 toGetSize, TDecompressionStream * stream);
+int swiDecompressLZSSVram(const void * source, void * destination, uint32 toGetSize, const TDecompressionStream * stream);
 
-int swiDecompressLZSSVramNTR(void * source, void * destination, uint32 toGetSize, TDecompressionStream * stream);
-int swiDecompressLZSSVramTWL(void * source, void * destination, uint32 toGetSize, TDecompressionStream * stream);
+int swiDecompressLZSSVramNTR(const void * source, void * destination, uint32 toGetSize, const TDecompressionStream * stream);
+int swiDecompressLZSSVramTWL(const void * source, void * destination, uint32 toGetSize, const TDecompressionStream * stream);
 
 
 /*!	\brief Decompresses Huffman compressed data.
 
-	\param source			Pointer to source data (always goes through the function pointers, so could just be an offset).
-	\param destination		Pointer to destination.
-	\param toGetSize		Callback value that is passed to getHeaderCallback function pointer.
-	\param stream			Pointer to struct with callback function pointers.
+	\param source		Pointer to source data (always goes through the function pointers, so could just be an offset).
+	\param destination	Pointer to destination.
+	\param buffer		Buffer to store huffman tree (0x200 bytes)
+	\param stream		Pointer to struct with callback function pointers.
 
 	\return The length of the decompressed data, or a signed errorcode from the Open/Close functions.
 	\see decompress.h
 */
-int swiDecompressHuffman(void * source, void * destination, uint32 toGetSize, TDecompressionStream * stream);
+int swiDecompressHuffman(const void * source, void * destination, void * buffer, const TDecompressionStream * stream);
 
 
 /*!	\brief Decompresses RLE compressed data.
@@ -269,7 +282,7 @@ int swiDecompressHuffman(void * source, void * destination, uint32 toGetSize, TD
 	\note Writes data a byte at a time.
 	\see decompress.h
 */
-void swiDecompressRLEWram(void * source, void * destination);
+void swiDecompressRLEWram(const void * source, void * destination);
 
 
 /*!	\brief Decompresses RLE compressed data vram safe.
@@ -288,7 +301,7 @@ void swiDecompressRLEWram(void * source, void * destination);
 	\note Writes data a halfword at a time.
 	\see decompress.h
 */
-int swiDecompressRLEVram(void * source, void * destination, uint32 toGetSize, TDecompressionStream * stream);
+int swiDecompressRLEVram(const void * source, void * destination, uint32 toGetSize, const TDecompressionStream * stream);
 
 
 
