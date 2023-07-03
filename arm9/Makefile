@@ -26,10 +26,9 @@ DATA			:=	../source/arm9
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv5te -mtune=arm946e-s -DARM9
+ARCH	:=	-marm -march=armv5te -mtune=arm946e-s -DARM9
 
 CFLAGS	:=	-Wall -O3 -mword-relocations \
-			-ffunction-sections -fdata-sections \
 			-fomit-frame-pointer -ffast-math \
 			$(ARCH)
 
